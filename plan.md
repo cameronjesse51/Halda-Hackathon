@@ -8,7 +8,7 @@ An always-on AI college counselor called Halda that meets students where they ar
 
 ## Hard requirements from the brief
 
-- Multi-channel: web chat is primary, SMS handoff via Twilio once phone number is captured
+- Multi-channel with distinct purposes: **web is the rich experience** (chat + profile side panel + college cards + micro-internship UI), **SMS is the retention channel** that keeps students engaged after they close the browser. SMS is not a second chat interface — it's how Halda nudges students back via scheduled check-ins, deadline reminders, and follow-ups triggered by `schedule_checkin`. The flow is: discover and explore on web → stay connected over SMS.
 - Real college data pulled from the College Scorecard API (https://collegescorecard.ed.gov/data/documentation/) — no mocked college data in the demo
 - Student accounts with fully isolated multi-tenant architecture — no shared state between students
 - Profile builds progressively across sessions — every conversation adds signal
@@ -136,6 +136,7 @@ The agent behavior changes based on student stage:
 1. Open as Jordan (blank slate sophomore) — show onboarding, probing, and the "here's what you should do this year" milestone output. Show the reason-to-return hook.
 2. Switch to Devon — trigger the career exploration micro-internship for environmental science. Show learning velocity being captured and career clarity score increasing.
 3. Switch to Caleb — run a real College Scorecard query for top CS programs filtered by acceptance rate and outcomes. Show real data returned and explained.
+4. **The SMS moment** — during one of the above demos, capture a phone number. Then have the judge receive a live Twilio text on their own phone from Halda — a scheduled check-in, a deadline reminder, or a follow-up on something discussed in the web chat. This is the visceral proof that Halda stays in the student's life after they close the tab.
 
 ## Tech stack
 
@@ -155,7 +156,7 @@ The agent behavior changes based on student stage:
 3. Claude agent with tool calling wired to `update_profile` and `search_colleges`
 4. Basic React chat UI that renders agent responses and shows the profile building in a side panel
 5. Qdrant setup with 20 seeded college embeddings
-6. Twilio SMS webhook that shares the same agent and profile backend as web chat
+6. Twilio SMS integration — not a second chat UI, but the retention layer: `schedule_checkin` triggers future texts (reminders, nudges, follow-ups) that bring students back to the web experience
 7. Micro-internship flow triggered by career curiosity detection
 
 ## The north star for every decision
