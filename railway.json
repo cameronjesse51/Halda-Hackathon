@@ -1,9 +1,8 @@
 {
   "$schema": "https://railway.app/railway.schema.json",
   "deploy": {
-    "buildCommand": "npm run build",
-    "startCommand": "node server.js",
-    "healthcheckPath": "/api/health",
+    "buildCommand": "pip install -r backend/requirements.txt",
+    "startCommand": "uvicorn backend.app:app --host 0.0.0.0 --port $PORT",
     "restartPolicyType": "ON_FAILURE"
   }
 }
