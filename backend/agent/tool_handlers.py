@@ -669,18 +669,22 @@ def _handle_search_colleges(tool_input: dict, profile: dict) -> tuple[str, dict]
     requested_program = _requested_program_name(filters, profile)
     resolved_cip_codes = rpc_params.get("requested_cip_codes")
 
-    if not results and (resolved_cip_codes or requested_program):
-        program_filters = dict(filters)
-        credential_filter = rpc_params.get("filter_credential")
-        if credential_filter:
-            program_filters["_credential_filter"] = credential_filter
-        results = _program_first_fallback(
-            db, resolved_cip_codes, requested_program, program_filters, limit,
-        )
-
     results = _enrich_program_details(
         db, results, requested_program, resolved_cip_codes,
     )
+
+    if resolved_cip_codes or requested_program:
+        confirmed = [r for r in results if r.get("enriched_programs")]
+        if confirmed:
+            results = confirmed
+        else:
+            program_filters = dict(filters)
+            credential_filter = rpc_params.get("filter_credential")
+            if credential_filter:
+                program_filters["_credential_filter"] = credential_filter
+            results = _program_first_fallback(
+                db, resolved_cip_codes, requested_program, program_filters, limit,
+            )
 
     normalized = normalize_college_results(
         results,
