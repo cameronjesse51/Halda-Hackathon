@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import './App.css'
 import { normalizePhone } from './phone.js'
 import CollegeResults from './components/CollegeResults.jsx'
+import ScholarshipResults from './components/ScholarshipResults.jsx'
 
 const rawEnvUrl = import.meta.env.VITE_API_URL || ''
 const isEnvSms = rawEnvUrl && (rawEnvUrl.includes(':3001') || rawEnvUrl.includes('textbelt'))
@@ -40,6 +41,8 @@ async function consumeConversationStream(res, { onTextDelta, onProfile, onColleg
       onTextDelta(data.text || '')
     } else if (eventType === 'college_results') {
       onCollegeResults?.(data)
+    } else if (eventType === 'scholarship_results') {
+      onScholarshipResults?.(data)
     } else if (eventType === 'profile_update' || eventType === 'done') {
       onProfile(data.updated_profile)
     }
@@ -330,6 +333,18 @@ function ChatScreen({ sessionToken, initialProfile, onSignOut }) {
     })
   }
 
+  const attachScholarshipResults = (scholarshipResults) => {
+    setMessages(prev => {
+      const updated = [...prev]
+      const lastIndex = updated.length - 1
+      const last = updated[lastIndex]
+      if (last?.role === 'assistant') {
+        updated[lastIndex] = { ...last, scholarshipResults }
+      }
+      return updated
+    })
+  }
+
   const advanceOnboarding = (stepCompleted, value) => {
     const newData = { ...onboardingData, [stepCompleted]: value }
     setOnboardingData(newData)
@@ -407,6 +422,7 @@ function ChatScreen({ sessionToken, initialProfile, onSignOut }) {
         },
         onProfile: setProfile,
         onCollegeResults: attachCollegeResults,
+        onScholarshipResults: attachScholarshipResults,
       })
     } catch (e) {
       console.error('Onboarding error:', e)
@@ -472,6 +488,7 @@ function ChatScreen({ sessionToken, initialProfile, onSignOut }) {
         },
         onProfile: setProfile,
         onCollegeResults: attachCollegeResults,
+        onScholarshipResults: attachScholarshipResults,
       })
     } catch (e) {
       console.error('Conversation stream error:', e)
@@ -518,6 +535,9 @@ function ChatScreen({ sessionToken, initialProfile, onSignOut }) {
                   </div>
                 )}
                 {hasCollegeResults && <CollegeResults resultSet={msg.collegeResults} />}
+                {msg.scholarshipResults?.scholarships?.length > 0 && (
+                  <ScholarshipResults resultSet={msg.scholarshipResults} />
+                )}
               </div>
             )
           })}

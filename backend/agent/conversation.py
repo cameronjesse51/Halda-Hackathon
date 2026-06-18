@@ -9,12 +9,12 @@ try:
     from backend.agent.system_prompt import build_system_prompt
     from backend.agent.tools import TOOLS
     from backend.agent.tool_handlers import handle_tool_call
-    from backend.agent.stream_events import college_results_event
+    from backend.agent.stream_events import college_results_event, scholarship_results_event
 except ModuleNotFoundError:
     from agent.system_prompt import build_system_prompt
     from agent.tools import TOOLS
     from agent.tool_handlers import handle_tool_call
-    from agent.stream_events import college_results_event
+    from agent.stream_events import college_results_event, scholarship_results_event
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("halda")
@@ -168,6 +168,9 @@ async def stream_conversation(
             ui_payload = college_results_event(block.name, result_str)
             if ui_payload is not None:
                 yield _sse("college_results", ui_payload)
+            scholarship_payload = scholarship_results_event(block.name, result_str)
+            if scholarship_payload is not None:
+                yield _sse("scholarship_results", scholarship_payload)
 
         yield _sse("profile_update", {"updated_profile": profile})
 

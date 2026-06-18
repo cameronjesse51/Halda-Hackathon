@@ -13,6 +13,7 @@ try:
         get_next_probe,
         record_probe_score,
     )
+    from backend.agent.scholarship import handle_search_scholarships
 except ModuleNotFoundError:
     from agent.profile import merge_profile_update
     from agent.college_recommendations import normalize_college_results
@@ -22,6 +23,7 @@ except ModuleNotFoundError:
         get_next_probe,
         record_probe_score,
     )
+    from agent.scholarship import handle_search_scholarships
 
 log = logging.getLogger(__name__)
 
@@ -518,6 +520,7 @@ HANDLERS = {
     "update_profile": _handle_update_profile,
     "probe_concept": _handle_probe_concept,
     "search_colleges": _handle_search_colleges,
+    "search_scholarships": handle_search_scholarships,
     "schedule_checkin": _handle_schedule_checkin,
     "score_probe_response": _handle_score_probe_response,
 }

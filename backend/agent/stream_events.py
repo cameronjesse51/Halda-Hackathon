@@ -34,3 +34,29 @@ def college_results_event(tool_name: str, tool_output: str) -> dict | None:
         return None
 
     return payload
+
+
+def scholarship_results_event(tool_name: str, tool_output: str) -> dict | None:
+    """Return a validated scholarship_results payload for SSE emission.
+
+    Guards against handler errors or unexpected JSON being rendered as
+    scholarship cards in the UI.
+    """
+    if tool_name != "search_scholarships":
+        return None
+
+    try:
+        payload = json.loads(tool_output)
+    except (TypeError, json.JSONDecodeError):
+        return None
+
+    if not isinstance(payload, dict):
+        return None
+    if payload.get("event") != "scholarship_results":
+        return None
+    if not isinstance(payload.get("scholarships"), list):
+        return None
+    if not payload.get("query"):
+        return None
+
+    return payload

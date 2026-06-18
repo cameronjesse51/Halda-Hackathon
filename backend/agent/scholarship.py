@@ -50,40 +50,83 @@ def _domain(url: str) -> str:
 
 
 def _build_query(tool_input: dict, profile: dict) -> str:
-    """Enrich the agent's query with profile signals the student has already shared."""
+    """Enrich the agent's query with every relevant profile signal.
+
+    Claude supplies a base query and optional filters. This function
+    appends anything from the stored profile that would meaningfully
+    narrow the search — so results are tailored even if Claude's tool
+    call is sparse.
+    """
     base = tool_input.get("query", "scholarships for college students")
     filters = tool_input.get("filters", {})
+    base_lower = base.lower()
 
     parts = [base]
 
-    # Append major if not already in query and known from profile
-    if not filters.get("major"):
-        major = profile.get("academic", {}).get("intended_major")
-        if major and major.lower() not in base.lower():
-            parts.append(f"{major} major")
+    academic = profile.get("academic", {})
+    stated = profile.get("stated", {})
+    constraints = profile.get("hard_constraints", {})
 
-    # Append state if not already in query
+    # ── Major / field of study ────────────────────────────────────────
+    major = filters.get("major") or academic.get("intended_major")
+    if major and major.lower() not in base_lower:
+        parts.append(f"{major} major")
+
+    # ── GPA ──────────────────────────────────────────────────────────
+    # Only append GPA if it would unlock awards (≥ 3.0 meaningful for merit)
+    gpa = filters.get("gpa_min") or academic.get("gpa")
+    if gpa and float(gpa) >= 3.0 and "gpa" not in base_lower:
+        parts.append(f"{gpa} GPA")
+
+    # ── Location / state ─────────────────────────────────────────────
     if not filters.get("state"):
-        locs = profile.get("stated", {}).get("location_pref") or []
+        locs = stated.get("location_pref") or []
         if isinstance(locs, str):
             locs = [locs]
-        if locs and locs[0].lower() not in base.lower():
+        if locs and locs[0].lower() not in base_lower:
             parts.append(f"in {locs[0]}")
 
-    # International student flag
-    if profile.get("hard_constraints", {}).get("visa_required"):
-        parts.append("international students F-1 visa")
+    # ── Career goals → domain-specific scholarships ───────────────────
+    career_goals = stated.get("career_goals") or []
+    if career_goals and not any(g.lower() in base_lower for g in career_goals):
+        # Use the first career goal to sharpen the query
+        parts.append(f"{career_goals[0]} career")
 
-    # Need-based / merit signals
+    # ── Financial need ────────────────────────────────────────────────
+    max_cost = constraints.get("max_cost")
+    if max_cost and "need" not in base_lower and int(max_cost) < 20000:
+        parts.append("need-based financial aid")
     if filters.get("need_based"):
         parts.append("need-based")
     if filters.get("merit_based"):
         parts.append("merit scholarship")
 
-    # Keep results fresh by including current year
-    year = datetime.now().year
-    if str(year) not in base:
-        parts.append(str(year))
+    # ── International / visa ─────────────────────────────────────────
+    if constraints.get("visa_required") and "international" not in base_lower:
+        parts.append("international students F-1 visa")
+
+    # ── Transfer students ─────────────────────────────────────────────
+    if constraints.get("transfer_student") and "transfer" not in base_lower:
+        parts.append("transfer student")
+
+    # ── Grade / stage context ─────────────────────────────────────────
+    stage = profile.get("stage")
+    grade = academic.get("grade")
+    if grade and str(grade) not in base_lower:
+        if str(grade) in ("11", "12"):
+            parts.append("high school senior")
+        elif stage == "college":
+            parts.append("undergraduate college student")
+
+    # ── Ethnicity / identity (only if Claude explicitly passed it) ─────
+    ethnicity = filters.get("ethnicity")
+    if ethnicity and ethnicity.lower() not in base_lower:
+        parts.append(ethnicity)
+
+    # ── Keep results fresh with current year ──────────────────────────
+    year = str(datetime.now().year)
+    if year not in base:
+        parts.append(year)
 
     return " ".join(parts)
 
