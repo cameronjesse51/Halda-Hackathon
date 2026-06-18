@@ -319,11 +319,10 @@ function ChatScreen({ studentId, initialProfile, onSignOut }) {
 
     switch (stepCompleted) {
       case 'name': {
-        const firstName = value.split(' ')[0]
         setMessages(prev => [
           ...prev,
           { role: 'user', text: value },
-          { role: 'assistant', text: `Nice to meet you, ${firstName}! What grade are you in?` }
+          { role: 'assistant', text: 'Nice to meet you! What grade are you in?' }
         ])
         setOnboardingStep('grade')
         break
