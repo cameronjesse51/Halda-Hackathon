@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import './App.css'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+const API_URL = import.meta.env.VITE_API_URL || ''
 
 const GRADE_OPTIONS = ['9th', '10th', '11th', '12th']
 
@@ -566,7 +566,7 @@ export default function App() {
     }
 
     setLoading(true)
-    const apiUrl = import.meta.env.VITE_API_URL
+    const apiUrl = API_URL
 
     try {
       const response = await fetch(`${apiUrl}/api/send-verification`, {
@@ -604,7 +604,7 @@ export default function App() {
     setLoading(true)
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/verify-code`, {
+      const response = await fetch(`${API_URL}/api/verify-code`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone, code })
@@ -621,7 +621,7 @@ export default function App() {
       const sid = phone.replace(/\D/g, '')
       let existing = null
       try {
-        const profileRes = await fetch(`${import.meta.env.VITE_API_URL}/profile/${sid}`)
+        const profileRes = await fetch(`${API_URL}/profile/${sid}`)
         const profileData = await profileRes.json()
         if (profileRes.ok && profileData.contact?.first_name) {
           existing = profileData
