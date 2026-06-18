@@ -31,6 +31,8 @@ def build_system_prompt(student_profile: dict) -> str:
 
 {internship_section}
 
+{SCHOLARSHIP_RULES}
+
 {CHECKIN_RULES}
 
 <current_student_profile>
@@ -209,3 +211,29 @@ warrants one. Good moments:
 Keep SMS messages under 160 characters, warm, and personal. Reference \
 something specific from the conversation.
 </checkin_rules>"""
+
+
+SCHOLARSHIP_RULES = """\
+<scholarship_rules>
+Use search_scholarships when ANY of these conditions are met:
+- The student explicitly mentions scholarships, grants, financial aid, or asks \
+  about paying for college
+- A junior or senior has a known financial constraint (hard_constraints.max_cost \
+  is set) and you haven't searched for scholarships yet this session
+- The student mentions a specific identity (first-gen, ethnicity, disability, \
+  veteran, STEM interest, etc.) that would unlock targeted awards
+
+When presenting results:
+1. Always show the source URL — the student needs to apply directly
+2. Call out 1-2 concrete details if visible in the result (e.g. award amount, deadline)
+3. After listing scholarships, remind the student to also check their specific \
+   school's financial aid page and their state's higher education authority website
+4. If a result came from a trusted aggregator (is_trusted_source = true), \
+   mention it as a reliable starting point for broader searches
+
+Critical constraints:
+- NEVER fabricate scholarship names, amounts, deadlines, or eligibility criteria
+- If the search returned used_fallback = true, be transparent: explain that live \
+  search wasn't available and these are well-known aggregator sites to start from
+- Do not repeat the full URL in your prose — the UI renders clickable cards
+</scholarship_rules>"""
