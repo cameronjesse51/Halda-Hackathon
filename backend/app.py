@@ -214,7 +214,7 @@ _DEMO_SEED: dict[str, dict] = {
         "contact": {"first_name": "Caleb", "last_name": "Park", "zip": "10001", "high_school": "Stuyvesant High School (New York, NY)"},
         "academic": {"grade": "12th", "gpa": 3.9, "intended_major": "Computer Science", "transfer_credits": None},
         "stated": {"interests": ["coding", "math", "algorithms", "research"], "career_goals": ["software engineering", "research", "technology"], "location_pref": [], "school_size_pref": "large"},
-        "hard_constraints": {"max_cost": 75000, "transfer_student": False, "visa_required": False},
+        "hard_constraints": {"max_cost": 32000, "transfer_student": False, "visa_required": False},
         "stage": "senior",
         "session_history": [
             {"role": "user", "content": "I have a 3.9 GPA and I want to study CS. I'm comparing MIT, Carnegie Mellon, Stanford, Georgia Tech, UIUC, and UT Austin. Give me the real data, not the hype."},
@@ -247,7 +247,7 @@ _DEMO_SEED: dict[str, dict] = {
         "contact": {"first_name": "Anika", "last_name": "Sharma", "zip": "", "high_school": "Delhi Public School (New Delhi, India)"},
         "academic": {"grade": "12th", "gpa": 3.8, "intended_major": "Computer Science", "transfer_credits": None},
         "stated": {"interests": ["coding", "technology", "math", "AI"], "career_goals": ["software engineering", "technology"], "location_pref": ["northeast", "west coast"], "school_size_pref": "large"},
-        "hard_constraints": {"max_cost": 55000, "transfer_student": False, "visa_required": True},
+        "hard_constraints": {"max_cost": 32000, "transfer_student": False, "visa_required": True},
         "stage": "senior",
         "session_history": [
             {"role": "user", "content": "I'm applying from India. I need a university with a strong CS program that accepts international students and has scholarships for internationals. I need an F-1 visa."},
@@ -324,12 +324,15 @@ async def issue_demo_session(x_demo_phone: str = Header(default="")):
     if phone not in allowed:
         raise HTTPException(status_code=403, detail="Demo persona not found")
 
-    profile = await db.get_or_create_profile(phone)
-    if not profile.get("contact", {}).get("first_name"):
-        profile = _seed_demo_profile(profile, phone)
-        await db.save_profile(profile)
+    try:
+        profile = await db.get_or_create_profile(phone)
+        if not profile.get("contact", {}).get("first_name"):
+            profile = _seed_demo_profile(profile, phone)
+            await db.save_profile(profile)
+        token, expires_at = create_session_token(profile["student_id"], phone)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Demo login failed: {exc}")
 
-    token, expires_at = create_session_token(profile["student_id"], phone)
     return {
         "token": token,
         "expires_at": expires_at,
