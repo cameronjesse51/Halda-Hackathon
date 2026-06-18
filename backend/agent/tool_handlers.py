@@ -304,6 +304,103 @@ def _enrich_program_details(
     return enriched
 
 
+def _program_first_fallback(
+    db, resolved_cip_codes: list[str] | None, requested_program: str | None,
+    filters: dict, limit: int,
+) -> list[dict]:
+    """When no schools match via college_embeddings, search institution_specialties
+    directly and return whatever institutions offer the program — even if they
+    have no embedding row."""
+    if not resolved_cip_codes and not requested_program:
+        return []
+    try:
+        query = (
+            db.table("institution_specialties")
+            .select('"UNITID","INSTNM","CIPDESC","CIPCODE","CREDDESC","AWARDS_LAST_YEAR"')
+        )
+        if resolved_cip_codes:
+            query = query.in_('"CIPCODE"', resolved_cip_codes)
+        elif requested_program:
+            query = query.ilike('"CIPDESC"', f"%{requested_program}%")
+
+        credential = filters.get("_credential_filter")
+        if credential:
+            query = query.eq('"CREDDESC"', credential)
+
+        specialty_rows = query.limit(500).execute().data or []
+    except Exception as exc:
+        log.warning("Program-first fallback query failed: %s", exc)
+        return []
+
+    if not specialty_rows:
+        return []
+
+    schools: dict[str, dict] = {}
+    for srow in specialty_rows:
+        uid = str(srow.get("UNITID", ""))
+        if not uid:
+            continue
+        if uid not in schools:
+            schools[uid] = {
+                "unitid": uid,
+                "name": srow.get("INSTNM") or "Unknown institution",
+                "programs": [],
+                "program_cip_codes": [],
+                "enriched_credentials": [],
+                "enriched_programs": [],
+                "enriched_awards_by_credential": {},
+            }
+        school = schools[uid]
+        cipdesc = srow.get("CIPDESC")
+        cipcode = str(srow.get("CIPCODE", ""))
+        creddesc = srow.get("CREDDESC")
+        awards = srow.get("AWARDS_LAST_YEAR") or 0
+
+        if cipdesc and cipdesc not in school["programs"]:
+            school["programs"].append(cipdesc)
+        if cipdesc and cipdesc not in school["enriched_programs"]:
+            school["enriched_programs"].append(cipdesc)
+        if cipcode and cipcode not in school["program_cip_codes"]:
+            school["program_cip_codes"].append(cipcode)
+        if creddesc and creddesc not in school["enriched_credentials"]:
+            school["enriched_credentials"].append(creddesc)
+        if creddesc:
+            school["enriched_awards_by_credential"][creddesc] = (
+                school["enriched_awards_by_credential"].get(creddesc, 0) + awards
+            )
+
+    results = list(schools.values())
+
+    states = filters.get("location_state") or []
+    if states:
+        try:
+            ids = [row["unitid"] for row in results]
+            embed_rows = (
+                db.table("college_embeddings")
+                .select("unitid,city,state")
+                .in_("unitid", ids)
+                .execute()
+                .data or []
+            )
+            state_by_id = {str(r["unitid"]): r.get("state") for r in embed_rows}
+            for row in results:
+                row["state"] = state_by_id.get(row["unitid"])
+                row["city"] = next(
+                    (r.get("city") for r in embed_rows if str(r["unitid"]) == row["unitid"]),
+                    None,
+                )
+            results = [r for r in results if r.get("state") in states]
+        except Exception:
+            pass
+
+    for row in results:
+        total_awards = sum(row["enriched_awards_by_credential"].values())
+        row["program_awards_last_year"] = total_awards
+
+    results.sort(key=lambda r: -r.get("program_awards_last_year", 0))
+    return results[:limit]
+
+
 def _structured_fallback_rows(db, filters: dict, query: str, limit: int) -> list[dict]:
     programs = filters.get("programs") or []
     vocational = _is_vocational_query(query, programs)
@@ -569,11 +666,20 @@ def _handle_search_colleges(tool_input: dict, profile: dict) -> tuple[str, dict]
         limit,
     )
 
+    requested_program = _requested_program_name(filters, profile)
+    resolved_cip_codes = rpc_params.get("requested_cip_codes")
+
+    if not results and (resolved_cip_codes or requested_program):
+        program_filters = dict(filters)
+        credential_filter = rpc_params.get("filter_credential")
+        if credential_filter:
+            program_filters["_credential_filter"] = credential_filter
+        results = _program_first_fallback(
+            db, resolved_cip_codes, requested_program, program_filters, limit,
+        )
+
     results = _enrich_program_details(
-        db,
-        results,
-        _requested_program_name(filters, profile),
-        rpc_params.get("requested_cip_codes"),
+        db, results, requested_program, resolved_cip_codes,
     )
 
     normalized = normalize_college_results(
