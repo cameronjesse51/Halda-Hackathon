@@ -57,7 +57,7 @@ const DEMO_PERSONAS = [
   },
 ]
 
-const GRADE_OPTIONS = ['9th', '10th', '11th', '12th']
+const GRADE_OPTIONS = ['9th', '10th', '11th', '12th', 'Already Graduated / Returning student']
 
 // Maps internal tool names to student-facing search labels
 const TOOL_LABELS = {
@@ -787,7 +787,7 @@ function ChatScreen({ sessionToken, initialProfile, onSignOut, onGoToEssays }) {
         setMessages(prev => [
           ...prev,
           { role: 'user', text: value },
-          { role: 'assistant', text: 'Nice to meet you! What grade are you in?' }
+          { role: 'assistant', text: 'Nice to meet you! What grade are you in?  Or are you coming back to school after a break?' }
         ])
         setOnboardingStep('grade')
         break
@@ -1251,12 +1251,11 @@ function Success({ phone, onStartChat }) {
 }
 
 function WelcomeBack({ profile, onContinue, onSignOut }) {
-  const name = profile?.first_name || 'there'
   return (
     <div className="form-container">
-      <h1>Welcome back, {name}!</h1>
+      <h1>Welcome back!</h1>
       <p className="subtitle">Ready to continue your college journey?</p>
-      <button onClick={onContinue} style={{ marginBottom: 12 }}>Continue as {name}</button>
+      <button onClick={onContinue} style={{ marginBottom: 12 }}>Continue to login</button>
       <button onClick={onSignOut} style={{ background: 'transparent', color: '#888', border: '1px solid #ddd', marginTop: 4 }}>
         Sign in as someone else
       </button>
