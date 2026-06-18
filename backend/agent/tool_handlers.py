@@ -478,6 +478,49 @@ def _recommendation_record(payload: dict, profile: dict) -> dict:
         "created_at": payload["generated_at"],
     }
 
+
+def _peer_interest_counts(db, profile: dict, colleges: list[dict]) -> dict[str, int]:
+    """Return aggregate interest counts without exposing any peer identity data."""
+    high_school = str(profile.get("contact", {}).get("high_school") or "").strip()
+    student_id = profile.get("student_id")
+    college_ids = [
+        str(college["college_id"])
+        for college in colleges
+        if college.get("college_id") is not None
+    ]
+    if not high_school or not student_id or not college_ids:
+        return {}
+
+    try:
+        response = db.rpc("peer_college_interest_counts", {
+            "current_student_id": student_id,
+            "current_high_school": high_school,
+            "requested_college_ids": college_ids,
+        }).execute()
+    except Exception as exc:
+        # Community context must never prevent a student from getting results.
+        log.warning("Could not load peer college interest counts: %s", exc)
+        return {}
+
+    counts = {}
+    for row in response.data or []:
+        college_id = row.get("college_id")
+        try:
+            count = int(row.get("peer_count", 0))
+        except (TypeError, ValueError):
+            continue
+        if college_id is not None and count > 0:
+            counts[str(college_id)] = count
+    return counts
+
+
+def _add_peer_interest_counts(payload: dict, counts: dict[str, int]) -> dict:
+    for college in payload.get("colleges", []):
+        count = counts.get(str(college.get("college_id")), 0)
+        if count > 0:
+            college["community"] = {"high_school_peer_count": count}
+    return payload
+
 def _handle_search_colleges(tool_input: dict, profile: dict) -> tuple[str, dict]:
     query = tool_input.get("query", "")
     filters = dict(tool_input.get("filters", {}))
@@ -539,6 +582,10 @@ def _handle_search_colleges(tool_input: dict, profile: dict) -> tuple[str, dict]
         filters=filters,
         query=query,
         comparison_requested=tool_input.get("comparison_requested", False),
+    )
+    normalized = _add_peer_interest_counts(
+        normalized,
+        _peer_interest_counts(db, profile, normalized["colleges"]),
     )
     try:
         db.table("college_recommendation_sets").insert(

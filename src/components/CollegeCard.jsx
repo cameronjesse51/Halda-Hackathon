@@ -71,6 +71,7 @@ export default function CollegeCard({ college, selected = false, comparisonDisab
   const programFacts = college.program_fit?.facts || {}
   const programPersonalized = college.program_fit?.personalized || {}
   const fit = college.fit || {}
+  const highSchoolPeerCount = Number(college.community?.high_school_peer_count) || 0
   const sources = college.sources || []
   const difference = costPersonalized.budget_difference
   const admissionMissing = admissionMessage(college)
@@ -151,6 +152,14 @@ export default function CollegeCard({ college, selected = false, comparisonDisab
       )}
 
       <p className="college-best-for">{bestForSummary(college)}</p>
+
+      {highSchoolPeerCount > 0 && (
+        <p className="college-peer-interest">
+          <span aria-hidden="true">&#9679;</span>
+          {highSchoolPeerCount} other {highSchoolPeerCount === 1 ? 'student' : 'students'} from your high school
+          {' '}{highSchoolPeerCount === 1 ? 'is' : 'are'} considering this school
+        </p>
+      )}
 
       {onToggleComparison && (
         <button

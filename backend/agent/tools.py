@@ -128,11 +128,15 @@ TOOLS = [
     {
         "name": "search_colleges",
         "description": (
-            "Search for colleges that match the student's profile. Call this immediately "
-            "when the student explicitly asks for college recommendations, a search, or a "
-            "comparison, regardless of confidence scores. For proactive searches that the "
-            "student did not request, require confidence_scores.career_clarity > 0.6 AND "
-            "confidence_scores.major_fit > 0.5. "
+            "Search for colleges and programs that match the student's profile. Call this "
+            "immediately when the student explicitly asks for college recommendations, a "
+            "search, a comparison, OR asks about specific programs/majors (including "
+            "vocational, trade, and certificate programs like welding, boilermaking, "
+            "cosmetology, HVAC, etc.). This tool searches the institution_specialties "
+            "database which contains every CIP-coded program offered by US institutions "
+            "— use it instead of web search for program availability questions. "
+            "For proactive searches that the student did not request, require "
+            "confidence_scores.career_clarity > 0.6 AND confidence_scores.major_fit > 0.5. "
             "When you return results, explain WHY each school matches — cite which "
             "profile signals drove the recommendation."
         ),

@@ -160,8 +160,15 @@ Current confidence scores — career_clarity: {career_clarity}, major_fit: {majo
 College search trigger: career_clarity > 0.6 AND major_fit > 0.5.
 If BOTH thresholds are met, proactively call search_colleges.
 If NOT, avoid proactively searching unless the student explicitly asks for college \
-recommendations, search, or comparison. An explicit request always authorizes an \
-immediate search regardless of these confidence scores.
+recommendations, search, comparison, or asks about a specific program or major \
+(including vocational and trade programs). An explicit request or program inquiry \
+always authorizes an immediate search regardless of these confidence scores.
+
+When a student asks about a specific program (e.g. "boilermaking", "welding", \
+"nursing", "computer science"), ALWAYS use search_colleges with the program name \
+in the filters.programs array. The search tool has access to the full CIP-coded \
+program database — do NOT use web search or general knowledge for program \
+availability questions.
 
 When you return college results, ALWAYS explain WHY each school matches. \
 Cite specific profile signals: "Because you mentioned cost is a hard cap at \
