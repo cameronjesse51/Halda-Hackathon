@@ -1,13 +1,17 @@
 import json
 from pathlib import Path
 
+from dotenv import load_dotenv
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
+load_dotenv()
+
 from backend.agent.profile import empty_profile
 from backend.agent.conversation import run_conversation, stream_conversation
+from backend import db
 
 app = FastAPI(title="Halda AI College Counselor")
 
@@ -18,9 +22,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-profiles: dict[str, dict] = {}
-conversations: dict[str, list] = {}
 
 schools_path = Path(__file__).parent / "schools.json"
 with open(schools_path) as f:
@@ -54,12 +55,11 @@ class OnboardRequest(BaseModel):
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat(req: ChatRequest):
-    if req.student_id not in profiles:
-        profiles[req.student_id] = empty_profile(req.student_id)
-        conversations[req.student_id] = []
+    profile = await db.get_profile(req.student_id)
+    if not profile:
+        profile = empty_profile(req.student_id)
 
-    profile = profiles[req.student_id]
-    history = conversations[req.student_id]
+    history = profile.get("session_history", [])
 
     response_text, updated_profile, updated_history = await run_conversation(
         student_id=req.student_id,
@@ -68,23 +68,21 @@ async def chat(req: ChatRequest):
         history=history,
     )
 
-    profiles[req.student_id] = updated_profile
-    conversations[req.student_id] = updated_history
+    updated_profile["session_history"] = updated_history
+    await db.save_profile(updated_profile)
 
     return ChatResponse(response=response_text, updated_profile=updated_profile)
 
 
 @app.post("/chat/stream")
 async def chat_stream(req: ChatRequest):
-    if req.student_id not in profiles:
-        profiles[req.student_id] = empty_profile(req.student_id)
-        conversations[req.student_id] = []
+    profile = await db.get_profile(req.student_id)
+    if not profile:
+        profile = empty_profile(req.student_id)
 
-    profile = profiles[req.student_id]
-    history = conversations[req.student_id]
+    history = profile.get("session_history", [])
 
     async def event_generator():
-        nonlocal profile
         async for event in stream_conversation(
             student_id=req.student_id,
             user_message=req.message,
@@ -92,8 +90,9 @@ async def chat_stream(req: ChatRequest):
             history=history,
         ):
             yield event
-        profiles[req.student_id] = profile
-        conversations[req.student_id] = history
+
+        profile["session_history"] = history
+        await db.save_profile(profile)
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
@@ -110,8 +109,7 @@ async def onboard(req: OnboardRequest):
     profile["academic"]["grade"] = req.grade
     profile["stage"] = GRADE_TO_STAGE.get(req.grade, "sophomore")
 
-    profiles[req.student_id] = profile
-    conversations[req.student_id] = []
+    await db.save_profile(profile)
 
     return {"profile": profile}
 
@@ -162,6 +160,7 @@ async def search_schools(q: str = Query(""), zip: str = Query("")):
 
 @app.get("/profile/{student_id}")
 async def get_profile(student_id: str):
-    if student_id not in profiles:
+    profile = await db.get_profile(student_id)
+    if not profile:
         return {"error": "Student not found"}
-    return profiles[student_id]
+    return profile
