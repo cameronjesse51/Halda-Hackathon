@@ -3,6 +3,7 @@ import logging
 
 try:
     from backend.agent.profile import merge_profile_update
+    from backend.agent.college_recommendations import normalize_college_results
     from backend.agent.internship import (
         start_internship,
         get_active_internship,
@@ -11,6 +12,7 @@ try:
     )
 except ModuleNotFoundError:
     from agent.profile import merge_profile_update
+    from agent.college_recommendations import normalize_college_results
     from agent.internship import (
         start_internship,
         get_active_internship,
@@ -167,10 +169,13 @@ def _handle_search_colleges(tool_input: dict, profile: dict) -> tuple[str, dict]
         log.error("Supabase RPC failed: %s", e)
         return json.dumps({"error": "Database query failed"}), profile
 
-    return json.dumps({
-        "results": results,
-        "note": "Real results from Supabase hybrid search."
-    }), profile
+    normalized = normalize_college_results(
+        results,
+        profile=profile,
+        filters=filters,
+        query=query,
+    )
+    return json.dumps(normalized), profile
 
 
 def _handle_schedule_checkin(tool_input: dict, profile: dict) -> tuple[str, dict]:

@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.0",
+  "event": "college_results",
+  "recommendation_set_id": "rec_01JY4C8J4QV8R5VFRP2H4B9EYK",
+  "generated_at": "2026-06-18T18:30:00Z",
+  "query": {
+    "text": "Affordable nursing programs near Utah",
+    "requested_program": "Nursing",
+    "student_budget_usd": 15000
+  },
+  "colleges": [
+    {
+      "college_id": "230764",
+      "name": "Example University",
+      "location": {
+        "city": "Example City",
+        "state": "UT"
+      },
+      "classification": {
+        "label": "target",
+        "reason": "The student's academic profile is near the institution's typical admitted range.",
+        "basis": "student_academic_profile"
+      },
+      "match_score": 87,
+      "match_reasons": [
+        {
+          "category": "financial",
+          "text": "The reported net price is within your annual budget.",
+          "evidence": "$13,250 net price versus a $15,000 budget"
+        },
+        {
+          "category": "program",
+          "text": "The institution reports offering the requested nursing program.",
+          "evidence": "CIP 51.3801"
+        }
+      ],
+      "financials": {
+        "currency": "USD",
+        "net_price": 13250,
+        "student_budget": 15000,
+        "budget_difference": 1750,
+        "within_budget": true
+      },
+      "admissions": {
+        "admission_rate": 0.65
+      },
+      "outcomes": {
+        "graduation_rate": 0.71,
+        "median_earnings_10yr": 58400
+      },
+      "program": {
+        "requested": "Nursing",
+        "status": "available",
+        "cip_code": "51.3801"
+      },
+      "sources": [
+        {
+          "name": "U.S. Department of Education College Scorecard",
+          "url": "https://collegescorecard.ed.gov/school/?230764",
+          "retrieved_at": "2026-06-18T18:29:58Z",
+          "fields": [
+            "financials.net_price",
+            "admissions.admission_rate",
+            "outcomes.graduation_rate",
+            "outcomes.median_earnings_10yr",
+            "program"
+          ]
+        }
+      ]
+    }
+  ]
+}
