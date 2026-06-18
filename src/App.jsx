@@ -538,18 +538,20 @@ function ChatScreen({ sessionToken, initialProfile, onSignOut }) {
         <div className="chat-messages">
           {messages.map((msg, i) => {
             const hasCollegeResults = msg.collegeResults?.colleges?.length > 0
+            const hasScholarshipResults = msg.scholarshipResults?.scholarships?.length > 0
+            const hasCards = hasCollegeResults || hasScholarshipResults
             const isActiveAssistant = msg.role === 'assistant' && streaming && i === messages.length - 1
 
             return (
               <div key={i} className={`chat-message-group ${msg.role}`}>
-                {(msg.text || isActiveAssistant) && (
+                {(msg.text || isActiveAssistant) && !hasCards && (
                   <div className={`chat-bubble ${msg.role}`}>
                     {msg.role === 'assistant' && <span className="bubble-label">Halda</span>}
                     <p>{msg.text}{isActiveAssistant ? '▌' : ''}</p>
                   </div>
                 )}
                 {hasCollegeResults && <CollegeResults resultSet={msg.collegeResults} />}
-                {msg.scholarshipResults?.scholarships?.length > 0 && (
+                {hasScholarshipResults && (
                   <ScholarshipResults resultSet={msg.scholarshipResults} />
                 )}
               </div>
