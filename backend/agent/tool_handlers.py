@@ -2,6 +2,12 @@ import json
 import logging
 
 from backend.agent.profile import merge_profile_update
+from backend.agent.internship import (
+    start_internship,
+    get_active_internship,
+    get_next_probe,
+    record_probe_score,
+)
 
 log = logging.getLogger(__name__)
 
@@ -25,6 +31,15 @@ def _handle_probe_concept(tool_input: dict, profile: dict) -> tuple[str, dict]:
     probe_type = tool_input.get("probe_type", "")
     difficulty = tool_input.get("difficulty", 0.3)
 
+    internship = get_active_internship(profile)
+    if not internship or internship["domain"] != domain:
+        internship = start_internship(profile, domain)
+        if not internship:
+            return f"Unknown domain: {domain}. Cannot start micro-internship.", profile
+        log.info("Started micro-internship: %s for domain %s", internship["internship_id"], domain)
+
+    next_probe = get_next_probe(internship)
+
     profile.setdefault("behavioral", {}).setdefault("probe_responses", []).append({
         "domain": domain,
         "concept": concept,
@@ -33,9 +48,54 @@ def _handle_probe_concept(tool_input: dict, profile: dict) -> tuple[str, dict]:
         "response": None,
     })
 
+    instructions = (
+        f"Micro-internship active: {domain}, module {internship['current_module']}. "
+        f"Deliver a {probe_type} on '{concept}' at difficulty {difficulty}. "
+    )
+    if probe_type == "intuition_probe":
+        instructions += "Ask BEFORE teaching — get their gut feeling first."
+    elif probe_type == "comprehension_check":
+        instructions += "Teach the concept first, then check understanding."
+    elif probe_type == "retention_check":
+        instructions += "Revisit the concept with different framing."
+    elif probe_type == "transfer_probe":
+        instructions += "Ask them to apply the concept to a completely new context."
+
+    return instructions, profile
+
+
+def _handle_score_probe_response(tool_input: dict, profile: dict) -> tuple[str, dict]:
+    domain = tool_input.get("domain", "")
+    concept = tool_input.get("concept", "")
+    probe_type = tool_input.get("probe_type", "")
+    score = tool_input.get("score", 0.0)
+    reasoning = tool_input.get("reasoning", "")
+
+    internship = get_active_internship(profile)
+    if not internship:
+        return "No active micro-internship to score.", profile
+
+    record_probe_score(internship, probe_type, concept, score)
+    log.info(
+        "Probe scored: %s/%s %s = %.2f (%s)",
+        domain, concept, probe_type, score, reasoning,
+    )
+
+    next_probe = get_next_probe(internship)
+    if not next_probe:
+        velocity = internship.get("overall_domain_velocity")
+        traits = internship.get("inferred_traits", [])
+        return (
+            f"Micro-internship complete for {domain}! "
+            f"Overall velocity: {velocity}. Traits: {', '.join(traits) if traits else 'computing...'}. "
+            "Share insights about what you learned about this student's learning style."
+        ), profile
+
     return (
-        f"Probe registered: {probe_type} on {domain}/{concept} at difficulty {difficulty}. "
-        "Deliver the probe question naturally in your next message."
+        f"Score recorded: {probe_type}={score}. "
+        f"Next: {next_probe['probe_type']} on '{next_probe['concept']}' "
+        f"(module {next_probe['module']}, difficulty {next_probe['difficulty']}). "
+        "Continue the conversation naturally and deliver the next probe."
     ), profile
 
 
@@ -101,4 +161,5 @@ HANDLERS = {
     "probe_concept": _handle_probe_concept,
     "search_colleges": _handle_search_colleges,
     "schedule_checkin": _handle_schedule_checkin,
+    "score_probe_response": _handle_score_probe_response,
 }

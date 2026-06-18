@@ -22,6 +22,14 @@ def _sse(event: str, data: dict) -> str:
     return f"event: {event}\ndata: {json.dumps(data)}\n\n"
 
 
+def _serialize_block(block) -> dict:
+    if block.type == "text":
+        return {"type": "text", "text": block.text}
+    elif block.type == "tool_use":
+        return {"type": "tool_use", "id": block.id, "name": block.name, "input": block.input}
+    return block.model_dump()
+
+
 async def run_conversation(
     student_id: str,
     user_message: str,
@@ -59,7 +67,7 @@ async def run_conversation(
             if block.type == "text" and block.text.strip():
                 all_text_parts.append(block.text)
 
-        assistant_content = [block.model_dump() for block in response.content]
+        assistant_content = [_serialize_block(block) for block in response.content]
         history.append({"role": "assistant", "content": assistant_content})
 
         if response.stop_reason != "tool_use":
@@ -126,7 +134,7 @@ async def stream_conversation(
             len(response.content),
         )
 
-        assistant_content = [block.model_dump() for block in response.content]
+        assistant_content = [_serialize_block(block) for block in response.content]
         history.append({"role": "assistant", "content": assistant_content})
 
         if response.stop_reason != "tool_use":

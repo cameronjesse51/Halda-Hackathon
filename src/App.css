@@ -23,6 +23,7 @@ body {
   align-items: center;
   justify-content: center;
   padding: 40px;
+  position: relative;
 }
 
 .halda-logo {
@@ -211,6 +212,251 @@ button:disabled {
   margin-bottom: 28px;
 }
 
+/* Dev skip button */
+.dev-skip-btn {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 8px 16px;
+  font-size: 12px;
+  width: auto;
+  min-height: auto;
+  cursor: pointer;
+}
+
+.dev-skip-btn:hover {
+  background: rgba(255, 255, 255, 0.25) !important;
+  color: #fff;
+}
+
+/* Chat Layout */
+.chat-layout {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+}
+
+.chat-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+}
+
+.chat-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.chat-header-logo {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: #2c3e50;
+  font-family: 'Courier New', monospace;
+}
+
+.chat-header-subtitle {
+  font-size: 13px;
+  color: #888;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.chat-empty {
+  text-align: center;
+  color: #888;
+  margin-top: 40%;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.chat-bubble {
+  max-width: 75%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  line-height: 1.5;
+  font-size: 14px;
+  white-space: pre-wrap;
+}
+
+.chat-bubble.user {
+  align-self: flex-end;
+  background: #1e88e5;
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.chat-bubble.assistant {
+  align-self: flex-start;
+  background: #f1f3f5;
+  color: #1a1a1a;
+  border-bottom-left-radius: 4px;
+}
+
+.bubble-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: #888;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.chat-input-bar {
+  display: flex;
+  gap: 8px;
+  padding: 16px 24px;
+  border-top: 1px solid #e0e0e0;
+  background: #f8f9fa;
+}
+
+.chat-input-bar input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  background: #fff;
+}
+
+.chat-input-bar button {
+  width: auto;
+  padding: 12px 24px;
+  min-height: auto;
+  font-size: 14px;
+}
+
+/* Sidebar */
+.chat-sidebar {
+  width: 320px;
+  border-left: 1px solid #e0e0e0;
+  background: #f8f9fa;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.chat-sidebar h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 20px;
+}
+
+.sidebar-empty {
+  color: #999;
+  font-size: 13px;
+  font-style: italic;
+}
+
+.profile-data {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.profile-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.field-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.field-value {
+  font-size: 14px;
+  color: #333;
+}
+
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.profile-tag {
+  display: inline-block;
+  padding: 3px 10px;
+  background: #e3f2fd;
+  color: #1565c0;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.profile-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid #e8e8e8;
+}
+
+.confidence-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bar-label {
+  font-size: 11px;
+  color: #666;
+  width: 80px;
+  text-transform: capitalize;
+}
+
+.bar-track {
+  flex: 1;
+  height: 6px;
+  background: #e0e0e0;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  background: #1e88e5;
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.bar-value {
+  font-size: 11px;
+  color: #888;
+  width: 32px;
+  text-align: right;
+}
+
+.internship-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .container {
@@ -235,5 +481,13 @@ button:disabled {
 
   .form-container {
     max-width: 100%;
+  }
+
+  .chat-sidebar {
+    display: none;
+  }
+
+  .chat-bubble {
+    max-width: 90%;
   }
 }

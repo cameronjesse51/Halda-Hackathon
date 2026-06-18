@@ -1,5 +1,7 @@
 import json
 
+from backend.agent.internship import build_internship_prompt_section
+
 
 def build_system_prompt(student_profile: dict) -> str:
     profile_json = json.dumps(student_profile, indent=2)
@@ -7,6 +9,7 @@ def build_system_prompt(student_profile: dict) -> str:
     confidence = student_profile.get("confidence_scores", {})
 
     stage_instructions = STAGE_INSTRUCTIONS.get(stage, STAGE_INSTRUCTIONS["sophomore"])
+    internship_section = build_internship_prompt_section(student_profile)
 
     return f"""{CORE_IDENTITY}
 
@@ -20,6 +23,8 @@ def build_system_prompt(student_profile: dict) -> str:
 )}
 
 {MICRO_INTERNSHIP_RULES}
+
+{internship_section}
 
 {CHECKIN_RULES}
 
