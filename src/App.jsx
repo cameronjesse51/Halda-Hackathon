@@ -164,12 +164,12 @@ function OnboardingSchoolSearch({ zip, onSelect }) {
   )
 }
 
-function ChatScreen({ studentId }) {
+function ChatScreen({ studentId, initialProfile }) {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [streaming, setStreaming] = useState(false)
-  const [profile, setProfile] = useState(null)
-  const [onboardingStep, setOnboardingStep] = useState('name')
+  const [profile, setProfile] = useState(initialProfile || null)
+  const [onboardingStep, setOnboardingStep] = useState(initialProfile ? 'done' : 'name')
   const [onboardingData, setOnboardingData] = useState({})
   const messagesEndRef = useRef(null)
 
@@ -178,10 +178,10 @@ function ChatScreen({ studentId }) {
   }, [messages, onboardingStep])
 
   useEffect(() => {
-    setMessages([{
-      role: 'assistant',
-      text: "Hey! I'm Halda, your AI college counselor. Let's get to know each other — what's your name?"
-    }])
+    const greeting = initialProfile?.contact?.first_name
+      ? `Welcome back, ${initialProfile.contact.first_name}! What can I help you with today?`
+      : "Hey! I'm Halda, your AI college counselor. Let's get to know each other — what's your name?"
+    setMessages([{ role: 'assistant', text: greeting }])
   }, [])
 
   const advanceOnboarding = (stepCompleted, value) => {
@@ -542,6 +542,14 @@ export default function App() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [studentId, setStudentId] = useState('')
+  const [existingProfile, setExistingProfile] = useState(null)
+
+  const startChat = (id, existingProfile = null) => {
+    const sid = id || phone.replace(/\D/g, '')
+    setStudentId(sid)
+    setExistingProfile(existingProfile)
+    setStep('chat')
+  }
 
   const validatePhone = (phoneStr) => {
     const digitsOnly = phoneStr.replace(/\D/g, '')
@@ -610,21 +618,26 @@ export default function App() {
         return
       }
 
+      const sid = phone.replace(/\D/g, '')
+      let existing = null
+      try {
+        const profileRes = await fetch(`${import.meta.env.VITE_API_URL}/profile/${sid}`)
+        const profileData = await profileRes.json()
+        if (profileRes.ok && profileData.contact?.first_name) {
+          existing = profileData
+        }
+      } catch { /* no profile found, treat as new user */ }
+
       setLoading(false)
-      setStep('success')
+      startChat(sid, existing)
     } catch {
       setError('Network error. Please try again.')
       setLoading(false)
     }
   }
 
-  const startChat = (id) => {
-    setStudentId(id || phone.replace(/\D/g, ''))
-    setStep('chat')
-  }
-
   if (step === 'chat') {
-    return <ChatScreen studentId={studentId} />
+    return <ChatScreen studentId={studentId} initialProfile={existingProfile} />
   }
 
   return (

@@ -43,7 +43,7 @@ app.post('/api/send-verification', async (req, res) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         phone,
-        message: `Your Hilda verification code is: ${code}`,
+        message: `Your Halda verification code is: ${code}`,
         key: TEXTBELT_KEY
       })
     })
