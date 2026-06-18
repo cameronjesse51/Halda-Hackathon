@@ -146,6 +146,11 @@ class OnboardRequest(BaseModel):
     goals: str = ""
 
 
+@app.get("/api/health")
+async def health():
+    return {"status": "ok", "service": "api"}
+
+
 def _extract_goals_into_profile(profile: dict, goals: str) -> dict:
     """
     Lightweight pre-extraction: seed stated.interests and stated.career_goals
