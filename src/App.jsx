@@ -15,9 +15,9 @@ const GRADE_OPTIONS = ['9th', '10th', '11th', '12th']
 
 // Maps internal tool names to student-facing search labels
 const TOOL_LABELS = {
-  search_scholarships: '🔍 Searching for scholarships…',
-  search_colleges:     '🏫 Finding college matches…',
-  schedule_checkin:    '📅 Scheduling a check-in…',
+  search_scholarships: 'Searching for scholarships…',
+  search_colleges:     'Finding college matches…',
+  schedule_checkin:    'Scheduling a check-in…',
 }
 
 async function consumeConversationStream(res, { onTextDelta, onProfile, onCollegeResults, onScholarshipResults, onToolCall }) {
@@ -578,7 +578,7 @@ function ChatScreen({ sessionToken, initialProfile, onSignOut }) {
               <span className="searching-dot" />
               <span className="searching-dot" />
               <span className="searching-label">
-                {TOOL_LABELS[activeSearch] ?? '⚙️ Working…'}
+                {TOOL_LABELS[activeSearch] ?? 'Working…'}
               </span>
             </div>
           )}
