@@ -1,13 +1,22 @@
 import json
 import logging
 
-from backend.agent.profile import merge_profile_update
-from backend.agent.internship import (
-    start_internship,
-    get_active_internship,
-    get_next_probe,
-    record_probe_score,
-)
+try:
+    from backend.agent.profile import merge_profile_update
+    from backend.agent.internship import (
+        start_internship,
+        get_active_internship,
+        get_next_probe,
+        record_probe_score,
+    )
+except ModuleNotFoundError:
+    from agent.profile import merge_profile_update
+    from agent.internship import (
+        start_internship,
+        get_active_internship,
+        get_next_probe,
+        record_probe_score,
+    )
 
 log = logging.getLogger(__name__)
 

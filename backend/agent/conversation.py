@@ -5,9 +5,14 @@ from typing import AsyncGenerator
 
 import anthropic
 
-from backend.agent.system_prompt import build_system_prompt
-from backend.agent.tools import TOOLS
-from backend.agent.tool_handlers import handle_tool_call
+try:
+    from backend.agent.system_prompt import build_system_prompt
+    from backend.agent.tools import TOOLS
+    from backend.agent.tool_handlers import handle_tool_call
+except ModuleNotFoundError:
+    from agent.system_prompt import build_system_prompt
+    from agent.tools import TOOLS
+    from agent.tool_handlers import handle_tool_call
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("halda")

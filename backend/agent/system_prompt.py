@@ -1,6 +1,9 @@
 import json
 
-from backend.agent.internship import build_internship_prompt_section
+try:
+    from backend.agent.internship import build_internship_prompt_section
+except ModuleNotFoundError:
+    from agent.internship import build_internship_prompt_section
 
 
 def build_system_prompt(student_profile: dict) -> str:

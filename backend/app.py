@@ -9,9 +9,14 @@ from supabase import create_client
 
 load_dotenv()
 
-from backend.agent.profile import empty_profile
-from backend.agent.conversation import run_conversation, stream_conversation
-from backend import db
+try:
+    from backend.agent.profile import empty_profile
+    from backend.agent.conversation import run_conversation, stream_conversation
+    from backend import db
+except ModuleNotFoundError:
+    from agent.profile import empty_profile
+    from agent.conversation import run_conversation, stream_conversation
+    import db
 
 import time
 import asyncio
