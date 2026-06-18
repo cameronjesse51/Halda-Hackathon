@@ -457,6 +457,195 @@ button:disabled {
   font-size: 13px;
 }
 
+/* Onboarding Widgets */
+.onboarding-widget {
+  align-self: flex-start;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  max-width: 75%;
+  animation: fadeSlideIn 0.3s ease;
+}
+
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.onboarding-input {
+  padding: 10px 14px;
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  font-size: 14px;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  min-width: 200px;
+}
+
+.onboarding-input:focus {
+  border-color: #1e88e5;
+  box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.1);
+}
+
+.onboarding-submit {
+  padding: 10px 20px;
+  background: #1e88e5;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  min-height: auto;
+  width: auto;
+  transition: background 0.2s;
+}
+
+.onboarding-submit:hover:not(:disabled) {
+  background: #1565c0;
+}
+
+.onboarding-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Grade Chips */
+.grade-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.grade-chip {
+  padding: 10px 22px;
+  background: #fff;
+  border: 1.5px solid #d0d5dd;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  min-height: auto;
+  width: auto;
+}
+
+.grade-chip:hover {
+  background: #e3f2fd;
+  border-color: #1e88e5;
+  color: #1565c0;
+}
+
+.grade-chip:active {
+  transform: scale(0.95);
+}
+
+/* School Search */
+.school-search {
+  flex-direction: column;
+  max-width: 400px;
+}
+
+.school-search-container {
+  position: relative;
+  width: 100%;
+}
+
+.school-input-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.school-input-row .onboarding-input {
+  width: 100%;
+  min-width: 280px;
+}
+
+.search-loading {
+  position: absolute;
+  right: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.search-loading .spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #ddd;
+  border-top-color: #1e88e5;
+}
+
+.school-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #d0d5dd;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.school-result-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 14px;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  font-size: 14px;
+  min-height: auto;
+  color: inherit;
+  transition: background 0.1s;
+}
+
+.school-result-item:last-child {
+  border-bottom: none;
+}
+
+.school-result-item:hover {
+  background: #f0f7ff;
+}
+
+.school-name {
+  font-weight: 500;
+  color: #1a1a1a;
+}
+
+.school-location {
+  font-size: 12px;
+  color: #888;
+}
+
+.school-no-results {
+  padding: 12px 14px;
+  font-size: 13px;
+  color: #888;
+  font-style: italic;
+}
+
+.school-search .onboarding-submit {
+  align-self: flex-start;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .container {

@@ -3,16 +3,251 @@ import './App.css'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
+const GRADE_OPTIONS = ['9th', '10th', '11th', '12th']
+
+function OnboardingNameInput({ onSubmit }) {
+  const [name, setName] = useState('')
+  const inputRef = useRef(null)
+
+  useEffect(() => { inputRef.current?.focus() }, [])
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    if (name.trim()) onSubmit(name.trim())
+  }
+
+  return (
+    <form className="onboarding-widget" onSubmit={handleSubmit}>
+      <input
+        ref={inputRef}
+        type="text"
+        placeholder="Your name"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        className="onboarding-input"
+      />
+      <button type="submit" disabled={!name.trim()} className="onboarding-submit">Continue</button>
+    </form>
+  )
+}
+
+function OnboardingGradeChips({ onSelect }) {
+  return (
+    <div className="onboarding-widget">
+      <div className="grade-chips">
+        {GRADE_OPTIONS.map(grade => (
+          <button
+            key={grade}
+            type="button"
+            className="grade-chip"
+            onClick={() => onSelect(grade)}
+          >
+            {grade}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function OnboardingZipInput({ onSubmit }) {
+  const [zip, setZip] = useState('')
+  const inputRef = useRef(null)
+
+  useEffect(() => { inputRef.current?.focus() }, [])
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    if (zip.length === 5) onSubmit(zip)
+  }
+
+  return (
+    <form className="onboarding-widget" onSubmit={handleSubmit}>
+      <input
+        ref={inputRef}
+        type="text"
+        placeholder="12345"
+        value={zip}
+        onChange={(e) => setZip(e.target.value.replace(/\D/g, '').slice(0, 5))}
+        maxLength="5"
+        className="onboarding-input"
+        style={{ maxWidth: 140 }}
+      />
+      <button type="submit" disabled={zip.length !== 5} className="onboarding-submit">Continue</button>
+    </form>
+  )
+}
+
+function OnboardingSchoolSearch({ zip, onSelect }) {
+  const [query, setQuery] = useState('')
+  const [results, setResults] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [showResults, setShowResults] = useState(false)
+  const inputRef = useRef(null)
+  const debounceRef = useRef(null)
+
+  useEffect(() => { inputRef.current?.focus() }, [])
+
+  useEffect(() => {
+    if (query.length < 2) {
+      setResults([])
+      setShowResults(false)
+      return
+    }
+
+    clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(async () => {
+      setLoading(true)
+      try {
+        const res = await fetch(
+          `${API_URL}/api/schools/search?q=${encodeURIComponent(query)}&zip=${encodeURIComponent(zip)}`
+        )
+        const data = await res.json()
+        setResults(data.schools || [])
+        setShowResults(true)
+      } catch {
+        setResults([])
+      }
+      setLoading(false)
+    }, 250)
+
+    return () => clearTimeout(debounceRef.current)
+  }, [query, zip])
+
+  const handleSelect = (school) => {
+    onSelect(`${school.name} (${school.city}, ${school.state})`)
+    setShowResults(false)
+  }
+
+  const handleCustomSubmit = (e) => {
+    e.preventDefault()
+    if (query.trim()) onSelect(query.trim())
+  }
+
+  return (
+    <form className="onboarding-widget school-search" onSubmit={handleCustomSubmit}>
+      <div className="school-search-container">
+        <div className="school-input-row">
+          <input
+            ref={inputRef}
+            type="text"
+            placeholder="Start typing your school name..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="onboarding-input"
+          />
+          {loading && <span className="search-loading"><span className="spinner" /></span>}
+        </div>
+        {showResults && results.length > 0 && (
+          <div className="school-results">
+            {results.map((school, i) => (
+              <button
+                key={i}
+                type="button"
+                className="school-result-item"
+                onClick={() => handleSelect(school)}
+              >
+                <span className="school-name">{school.name}</span>
+                <span className="school-location">{school.city}, {school.state}</span>
+              </button>
+            ))}
+          </div>
+        )}
+        {showResults && results.length === 0 && query.length >= 2 && !loading && (
+          <div className="school-results">
+            <div className="school-no-results">No matches — press Continue to use what you typed</div>
+          </div>
+        )}
+      </div>
+      <button type="submit" disabled={!query.trim()} className="onboarding-submit">Continue</button>
+    </form>
+  )
+}
+
 function ChatScreen({ studentId }) {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [streaming, setStreaming] = useState(false)
   const [profile, setProfile] = useState(null)
+  const [onboardingStep, setOnboardingStep] = useState('name')
+  const [onboardingData, setOnboardingData] = useState({})
   const messagesEndRef = useRef(null)
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+  }, [messages, onboardingStep])
+
+  useEffect(() => {
+    setMessages([{
+      role: 'assistant',
+      text: "Hey! I'm Halda, your AI college counselor. Let's get to know each other — what's your name?"
+    }])
+  }, [])
+
+  const advanceOnboarding = (stepCompleted, value) => {
+    const newData = { ...onboardingData, [stepCompleted]: value }
+    setOnboardingData(newData)
+
+    switch (stepCompleted) {
+      case 'name': {
+        const firstName = value.split(' ')[0]
+        setMessages(prev => [
+          ...prev,
+          { role: 'user', text: value },
+          { role: 'assistant', text: `Nice to meet you, ${firstName}! What grade are you in?` }
+        ])
+        setOnboardingStep('grade')
+        break
+      }
+      case 'grade': {
+        setMessages(prev => [
+          ...prev,
+          { role: 'user', text: `${value} grade` },
+          { role: 'assistant', text: "Got it! What's your zip code? This helps me find schools and resources near you." }
+        ])
+        setOnboardingStep('zip')
+        break
+      }
+      case 'zip': {
+        setMessages(prev => [
+          ...prev,
+          { role: 'user', text: value },
+          { role: 'assistant', text: "What high school do you go to?" }
+        ])
+        setOnboardingStep('school')
+        break
+      }
+      case 'school': {
+        setMessages(prev => [
+          ...prev,
+          { role: 'user', text: value },
+          { role: 'assistant', text: "Awesome! Last thing — tell me about your goals. What are you interested in studying? What do you want to do after high school? Just type whatever comes to mind." }
+        ])
+        setOnboardingStep('goals')
+        break
+      }
+    }
+  }
+
+  const initializeProfile = async (allData) => {
+    try {
+      const res = await fetch(`${API_URL}/api/onboard`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          student_id: studentId,
+          name: allData.name,
+          grade: allData.grade,
+          zip: allData.zip,
+          high_school: allData.school,
+        })
+      })
+      const data = await res.json()
+      if (data.profile) setProfile(data.profile)
+    } catch (err) {
+      console.error('Onboarding init error:', err)
+    }
+  }
 
   const sendMessage = async (e) => {
     e.preventDefault()
@@ -20,9 +255,16 @@ function ChatScreen({ studentId }) {
 
     const userMessage = input.trim()
     setInput('')
+
+    if (onboardingStep === 'goals') {
+      const allData = { ...onboardingData, goals: userMessage }
+      setOnboardingData(allData)
+      setOnboardingStep('done')
+      await initializeProfile(allData)
+    }
+
     setMessages(prev => [...prev, { role: 'user', text: userMessage }])
     setStreaming(true)
-
     setMessages(prev => [...prev, { role: 'assistant', text: '' }])
 
     try {
@@ -66,7 +308,7 @@ function ChatScreen({ studentId }) {
           }
         }
       }
-    } catch (err) {
+    } catch {
       setMessages(prev => {
         const updated = [...prev]
         const last = updated[updated.length - 1]
@@ -80,6 +322,11 @@ function ChatScreen({ studentId }) {
     setStreaming(false)
   }
 
+  const showInputBar = onboardingStep === 'goals' || onboardingStep === 'done'
+  const inputPlaceholder = onboardingStep === 'goals'
+    ? 'Tell me about your goals and interests...'
+    : 'Type a message...'
+
   return (
     <div className="chat-layout">
       <div className="chat-main">
@@ -89,32 +336,46 @@ function ChatScreen({ studentId }) {
         </div>
 
         <div className="chat-messages">
-          {messages.length === 0 && (
-            <div className="chat-empty">
-              <p>Hey! I'm Halda. Tell me a bit about yourself and I'll help you figure out the college thing.</p>
-            </div>
-          )}
           {messages.map((msg, i) => (
             <div key={i} className={`chat-bubble ${msg.role}`}>
               {msg.role === 'assistant' && <span className="bubble-label">Halda</span>}
               <p>{msg.text}{msg.role === 'assistant' && streaming && i === messages.length - 1 ? '▌' : ''}</p>
             </div>
           ))}
+
+          {onboardingStep === 'name' && (
+            <OnboardingNameInput onSubmit={(v) => advanceOnboarding('name', v)} />
+          )}
+          {onboardingStep === 'grade' && (
+            <OnboardingGradeChips onSelect={(v) => advanceOnboarding('grade', v)} />
+          )}
+          {onboardingStep === 'zip' && (
+            <OnboardingZipInput onSubmit={(v) => advanceOnboarding('zip', v)} />
+          )}
+          {onboardingStep === 'school' && (
+            <OnboardingSchoolSearch
+              zip={onboardingData.zip || ''}
+              onSelect={(v) => advanceOnboarding('school', v)}
+            />
+          )}
+
           <div ref={messagesEndRef} />
         </div>
 
-        <form className="chat-input-bar" onSubmit={sendMessage}>
-          <input
-            type="text"
-            placeholder="Type a message..."
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            disabled={streaming}
-          />
-          <button type="submit" disabled={streaming || !input.trim()}>
-            {streaming ? <span className="spinner"></span> : 'Send'}
-          </button>
-        </form>
+        {showInputBar && (
+          <form className="chat-input-bar" onSubmit={sendMessage}>
+            <input
+              type="text"
+              placeholder={inputPlaceholder}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              disabled={streaming}
+            />
+            <button type="submit" disabled={streaming || !input.trim()}>
+              {streaming ? <span className="spinner"></span> : 'Send'}
+            </button>
+          </form>
+        )}
       </div>
 
       <div className="chat-sidebar">
@@ -137,6 +398,18 @@ function ChatScreen({ studentId }) {
               <div className="profile-field">
                 <span className="field-label">Grade</span>
                 <span className="field-value">{profile.academic.grade}</span>
+              </div>
+            )}
+            {profile.contact?.high_school && (
+              <div className="profile-field">
+                <span className="field-label">High School</span>
+                <span className="field-value">{profile.contact.high_school}</span>
+              </div>
+            )}
+            {profile.contact?.zip && (
+              <div className="profile-field">
+                <span className="field-label">Zip Code</span>
+                <span className="field-value">{profile.contact.zip}</span>
               </div>
             )}
             {profile.academic?.gpa && (
@@ -210,7 +483,6 @@ function PhoneInput({ phone, setPhone, onSubmit, loading, error }) {
               onChange={(e) => setPhone(e.target.value)}
               required
             />
-            <span className="input-icon">📱</span>
           </div>
           {error && <div className="error-message show">{error}</div>}
         </div>
@@ -240,7 +512,6 @@ function VerificationCode({ code, setCode, onSubmit, loading, error, phone }) {
               maxLength="6"
               required
             />
-            <span className="input-icon">✓</span>
           </div>
           {error && <div className="error-message show">{error}</div>}
         </div>
@@ -256,7 +527,7 @@ function VerificationCode({ code, setCode, onSubmit, loading, error, phone }) {
 function Success({ phone, onStartChat }) {
   return (
     <div className="form-container success-state">
-      <div className="success-icon">✓</div>
+      <div className="success-icon">&#10003;</div>
       <h1>Phone verified!</h1>
       <p>Your number {phone} is now verified. We'll send you SMS updates and deadline reminders.</p>
       <button onClick={onStartChat}>Start chatting with Halda</button>
@@ -265,7 +536,7 @@ function Success({ phone, onStartChat }) {
 }
 
 export default function App() {
-  const [step, setStep] = useState('phone') // phone, verify, success, chat
+  const [step, setStep] = useState('phone')
   const [phone, setPhone] = useState('')
   const [code, setCode] = useState('')
   const [loading, setLoading] = useState(false)
@@ -288,20 +559,15 @@ export default function App() {
 
     setLoading(true)
     const apiUrl = import.meta.env.VITE_API_URL
-    console.log('Sending to:', `${apiUrl}/api/send-verification`)
-    console.log('Phone:', phone)
 
     try {
-      console.log('Fetching...')
       const response = await fetch(`${apiUrl}/api/send-verification`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone })
       })
 
-      console.log('Response status:', response.status)
       const data = await response.json()
-      console.log('Response data:', data)
 
       if (!response.ok) {
         setError(data.error || 'Failed to send verification code')
@@ -312,8 +578,7 @@ export default function App() {
       localStorage.setItem('studentPhone', phone)
       setLoading(false)
       setStep('verify')
-    } catch (err) {
-      console.error('Fetch error:', err)
+    } catch {
       setError('Network error. Please try again.')
       setLoading(false)
     }
@@ -347,7 +612,7 @@ export default function App() {
 
       setLoading(false)
       setStep('success')
-    } catch (err) {
+    } catch {
       setError('Network error. Please try again.')
       setLoading(false)
     }
@@ -364,10 +629,8 @@ export default function App() {
 
   return (
     <div className="container">
-      {/* Left: Branding */}
       <div className="branding-side">
         <div className="halda-logo">HALDA</div>
-        {/* Dev shortcut — skip auth for testing */}
         <button
           type="button"
           className="dev-skip-btn"
@@ -377,7 +640,6 @@ export default function App() {
         </button>
       </div>
 
-      {/* Right: Auth */}
       <div className="form-side">
         {step === 'phone' && (
           <PhoneInput
