@@ -535,8 +535,22 @@ function Success({ phone, onStartChat }) {
   )
 }
 
+function WelcomeBack({ profile, onContinue, onSignOut }) {
+  const name = profile?.contact?.first_name || 'there'
+  return (
+    <div className="form-container">
+      <h1>Welcome back, {name}!</h1>
+      <p className="subtitle">Ready to continue your college journey?</p>
+      <button onClick={onContinue} style={{ marginBottom: 12 }}>Continue as {name}</button>
+      <button onClick={onSignOut} style={{ background: 'transparent', color: '#888', border: '1px solid #ddd', marginTop: 4 }}>
+        Sign in as someone else
+      </button>
+    </div>
+  )
+}
+
 export default function App() {
-  const [step, setStep] = useState('phone')
+  const [step, setStep] = useState('loading')
   const [phone, setPhone] = useState('')
   const [code, setCode] = useState('')
   const [loading, setLoading] = useState(false)
@@ -544,11 +558,39 @@ export default function App() {
   const [studentId, setStudentId] = useState('')
   const [existingProfile, setExistingProfile] = useState(null)
 
-  const startChat = (id, existingProfile = null) => {
+  useEffect(() => {
+    const savedPhone = localStorage.getItem('halda_phone')
+    if (!savedPhone) {
+      setStep('phone')
+      return
+    }
+    fetch(`${API_URL}/profile/${savedPhone}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data?.contact?.first_name) {
+          setStudentId(savedPhone)
+          setExistingProfile(data)
+          setStep('welcome')
+        } else {
+          setStep('phone')
+        }
+      })
+      .catch(() => setStep('phone'))
+  }, [])
+
+  const startChat = (id, profile = null) => {
     const sid = id || phone.replace(/\D/g, '')
+    localStorage.setItem('halda_phone', sid)
     setStudentId(sid)
-    setExistingProfile(existingProfile)
+    setExistingProfile(profile)
     setStep('chat')
+  }
+
+  const handleSignOut = () => {
+    localStorage.removeItem('halda_phone')
+    setExistingProfile(null)
+    setStudentId('')
+    setStep('phone')
   }
 
   const validatePhone = (phoneStr) => {
@@ -636,6 +678,8 @@ export default function App() {
     }
   }
 
+  if (step === 'loading') return null
+
   if (step === 'chat') {
     return <ChatScreen studentId={studentId} initialProfile={existingProfile} />
   }
@@ -654,6 +698,14 @@ export default function App() {
       </div>
 
       <div className="form-side">
+        {step === 'welcome' && (
+          <WelcomeBack
+            profile={existingProfile}
+            onContinue={() => startChat(studentId, existingProfile)}
+            onSignOut={handleSignOut}
+          />
+        )}
+
         {step === 'phone' && (
           <PhoneInput
             phone={phone}
@@ -674,8 +726,6 @@ export default function App() {
             phone={phone}
           />
         )}
-
-        {step === 'success' && <Success phone={phone} onStartChat={() => startChat()} />}
       </div>
     </div>
   )
