@@ -164,7 +164,7 @@ function OnboardingSchoolSearch({ zip, onSelect }) {
   )
 }
 
-function ChatScreen({ studentId, initialProfile }) {
+function ChatScreen({ studentId, initialProfile, onSignOut }) {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [streaming, setStreaming] = useState(false)
@@ -333,6 +333,7 @@ function ChatScreen({ studentId, initialProfile }) {
         <div className="chat-header">
           <img src="/halda_logo_white.svg" alt="Halda" className="chat-header-logo" />
           <span className="chat-header-subtitle">AI College Counselor</span>
+          <button className="sign-out-btn" onClick={onSignOut}>Sign out</button>
         </div>
 
         <div className="chat-messages">
@@ -681,7 +682,7 @@ export default function App() {
   if (step === 'loading') return null
 
   if (step === 'chat') {
-    return <ChatScreen studentId={studentId} initialProfile={existingProfile} />
+    return <ChatScreen studentId={studentId} initialProfile={existingProfile} onSignOut={handleSignOut} />
   }
 
   return (

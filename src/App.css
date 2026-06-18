@@ -258,6 +258,25 @@ button:disabled {
 .chat-header-subtitle {
   font-size: 13px;
   color: #888;
+  flex: 1;
+}
+
+.sign-out-btn {
+  width: auto;
+  min-height: auto;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  background: transparent;
+  color: #888;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.sign-out-btn:hover {
+  background: #f0f0f0 !important;
+  color: #333;
 }
 
 .chat-messages {
