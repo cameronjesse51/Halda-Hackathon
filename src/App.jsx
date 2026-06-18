@@ -311,6 +311,33 @@ function ChatScreen({ studentId, initialProfile, onSignOut }) {
     }
   }
 
+  const initializeProfile = async (allData) => {
+    setOnboardingLoading(true)
+    try {
+      const res = await fetch(`${API_URL}/api/onboard`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          student_id: studentId,
+          first_name: allData.name.split(' ')[0],
+          grade: allData.grade,
+          zip: allData.zip,
+          high_school: allData.school,
+          goals: allData.goals
+        })
+      })
+      const data = await res.json()
+      setProfile(data.profile)
+      setMessages(prev => [...prev, { role: 'assistant', text: data.first_message }])
+      if (onUpdate) onUpdate()
+    } catch (e) {
+      console.error('Onboarding error:', e)
+      setMessages(prev => [...prev, { role: 'assistant', text: "Sorry, I had trouble saving your profile. Could you try again?" }])
+    } finally {
+      setOnboardingLoading(false)
+    }
+  }
+
   const handleGoalsSubmit = async (e) => {
     e.preventDefault()
     if (!input.trim()) return
