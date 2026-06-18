@@ -319,17 +319,19 @@ function ChatScreen({ studentId, initialProfile, onSignOut }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           student_id: studentId,
-          first_name: allData.name.split(' ')[0],
+          name: allData.name,
           grade: allData.grade,
           zip: allData.zip,
           high_school: allData.school,
           goals: allData.goals
         })
       })
+      if (!res.ok) {
+        throw new Error(`Onboarding failed: ${res.status}`)
+      }
       const data = await res.json()
       setProfile(data.profile)
       setMessages(prev => [...prev, { role: 'assistant', text: data.first_message }])
-      if (onUpdate) onUpdate()
     } catch (e) {
       console.error('Onboarding error:', e)
       setMessages(prev => [...prev, { role: 'assistant', text: "Sorry, I had trouble saving your profile. Could you try again?" }])
