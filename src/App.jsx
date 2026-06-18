@@ -178,11 +178,21 @@ function ChatScreen({ studentId, initialProfile, onSignOut }) {
   }, [messages, onboardingStep])
 
   useEffect(() => {
-    const greeting = initialProfile?.contact?.first_name
-      ? `Welcome back, ${initialProfile.contact.first_name}! What can I help you with today?`
+    const greeting = initialProfile?.first_name
+      ? `Welcome back, ${initialProfile.first_name}! What can I help you with today?`
       : "Hey! I'm Halda, your AI college counselor. Let's get to know each other — what's your name?"
     setMessages([{ role: 'assistant', text: greeting }])
   }, [])
+
+  const saveProfileFields = async (fields) => {
+    try {
+      await fetch(`${API_URL}/api/profile/${studentId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(fields)
+      })
+    } catch { /* non-blocking */ }
+  }
 
   const advanceOnboarding = (stepCompleted, value) => {
     const newData = { ...onboardingData, [stepCompleted]: value }
@@ -190,7 +200,9 @@ function ChatScreen({ studentId, initialProfile, onSignOut }) {
 
     switch (stepCompleted) {
       case 'name': {
-        const firstName = value.split(' ')[0]
+        const parts = value.trim().split(/\s+/)
+        saveProfileFields({ first_name: parts[0], last_name: parts.slice(1).join(' ') })
+        const firstName = parts[0]
         setMessages(prev => [
           ...prev,
           { role: 'user', text: value },
@@ -200,6 +212,8 @@ function ChatScreen({ studentId, initialProfile, onSignOut }) {
         break
       }
       case 'grade': {
+        const gradeToStage = { '9th': 'sophomore', '10th': 'sophomore', '11th': 'junior', '12th': 'senior' }
+        saveProfileFields({ grade: value, stage: gradeToStage[value] || 'sophomore' })
         setMessages(prev => [
           ...prev,
           { role: 'user', text: `${value} grade` },
@@ -209,6 +223,7 @@ function ChatScreen({ studentId, initialProfile, onSignOut }) {
         break
       }
       case 'zip': {
+        saveProfileFields({ zip: value })
         setMessages(prev => [
           ...prev,
           { role: 'user', text: value },
@@ -218,6 +233,7 @@ function ChatScreen({ studentId, initialProfile, onSignOut }) {
         break
       }
       case 'school': {
+        saveProfileFields({ high_school: value })
         setMessages(prev => [
           ...prev,
           { role: 'user', text: value },
@@ -664,9 +680,9 @@ export default function App() {
       const sid = phone.replace(/\D/g, '')
       let existing = null
       try {
-        const profileRes = await fetch(`${API_URL}/profile/${sid}`)
+        const profileRes = await fetch(`${API_URL}/api/profile/${sid}`)
         const profileData = await profileRes.json()
-        if (profileRes.ok && profileData.contact?.first_name) {
+        if (profileRes.ok && profileData?.first_name) {
           existing = profileData
         }
       } catch { /* no profile found, treat as new user */ }

@@ -115,6 +115,43 @@ app.post('/api/verify-code', async (req, res) => {
   }
 })
 
+// Upsert profile fields for a phone number
+app.post('/api/profile/:phone', async (req, res) => {
+  try {
+    const { phone } = req.params
+    const fields = req.body
+
+    const headers = {
+      apikey: process.env.SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${process.env.SUPABASE_ANON_KEY}`,
+      'Content-Type': 'application/json',
+    }
+
+    const checkRes = await fetch(
+      `${process.env.SUPABASE_URL}/rest/v1/student_profiles?phone=eq.${phone}&limit=1`,
+      { headers }
+    )
+    const existing = await checkRes.json()
+
+    if (existing.length > 0) {
+      await fetch(
+        `${process.env.SUPABASE_URL}/rest/v1/student_profiles?phone=eq.${phone}`,
+        { method: 'PATCH', headers, body: JSON.stringify(fields) }
+      )
+    } else {
+      await fetch(
+        `${process.env.SUPABASE_URL}/rest/v1/student_profiles`,
+        { method: 'POST', headers, body: JSON.stringify({ phone, ...fields }) }
+      )
+    }
+
+    res.json({ success: true })
+  } catch (error) {
+    console.error('Profile upsert error:', error)
+    res.status(500).json({ error: 'Failed to save profile' })
+  }
+})
+
 // Get profile by phone number
 app.get('/api/profile/:phone', async (req, res) => {
   try {
