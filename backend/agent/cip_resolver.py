@@ -26,11 +26,11 @@ def _load_all_cip_descs(db) -> list[str]:
     try:
         rows = (
             db.table("study_areas_by_code")
-            .select('"CIP_DESC"')
+            .select("cipdesc")
             .execute()
             .data or []
         )
-        _all_cip_descs = [r["CIP_DESC"] for r in rows if r.get("CIP_DESC")]
+        _all_cip_descs = [r["cipdesc"] for r in rows if r.get("cipdesc")]
         log.info("Loaded %d CIP descriptions for fuzzy fallback", len(_all_cip_descs))
     except Exception as exc:
         log.warning("Could not load CIP catalog for fuzzy fallback: %s", exc)
@@ -74,12 +74,12 @@ def resolve_cip_codes(db, program_text: str) -> list[str]:
         # 1. Fast path: substring match against the catalog
         catalog_rows = (
             db.table("study_areas_by_code")
-            .select('"CIP_DESC"')
-            .ilike('"CIP_DESC"', f"%{program_text}%")
+            .select("cipdesc")
+            .ilike("cipdesc", f"%{program_text}%")
             .execute()
             .data or []
         )
-        matched_descriptions = [r["CIP_DESC"] for r in catalog_rows if r.get("CIP_DESC")]
+        matched_descriptions = [r["cipdesc"] for r in catalog_rows if r.get("cipdesc")]
 
         # 2. Fuzzy fallback: load full catalog and find the closest description
         if not matched_descriptions:
