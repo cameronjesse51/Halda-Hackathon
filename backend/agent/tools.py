@@ -128,9 +128,11 @@ TOOLS = [
     {
         "name": "search_colleges",
         "description": (
-            "Search for colleges that match the student's profile. Only call this when "
-            "confidence_scores.career_clarity > 0.6 AND confidence_scores.major_fit > 0.5. "
-            "Before that threshold, keep building the profile through conversation. "
+            "Search for colleges that match the student's profile. Call this immediately "
+            "when the student explicitly asks for college recommendations, a search, or a "
+            "comparison, regardless of confidence scores. For proactive searches that the "
+            "student did not request, require confidence_scores.career_clarity > 0.6 AND "
+            "confidence_scores.major_fit > 0.5. "
             "When you return results, explain WHY each school matches — cite which "
             "profile signals drove the recommendation."
         ),
