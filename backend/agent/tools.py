@@ -207,4 +207,40 @@ TOOLS = [
             "required": ["channel", "send_at", "topic", "message_body"],
         },
     },
+    {
+        "name": "score_probe_response",
+        "description": (
+            "Score a student's response to a micro-internship probe question. "
+            "Call this AFTER the student answers a probe. Score based on reasoning "
+            "quality and depth of thinking, NOT correctness. A student who reasons "
+            "well but gets the wrong answer scores higher than one who guesses right. "
+            "0.0 = no engagement, 0.5 = reasonable attempt, 1.0 = exceptional reasoning."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "domain": {
+                    "type": "string",
+                    "description": "The domain being probed, e.g. 'environmental_science'",
+                },
+                "concept": {
+                    "type": "string",
+                    "description": "The concept being probed, e.g. 'ecosystems'",
+                },
+                "probe_type": {
+                    "type": "string",
+                    "enum": ["intuition_probe", "comprehension_check", "retention_check", "transfer_probe"],
+                },
+                "score": {
+                    "type": "number",
+                    "description": "Score from 0.0 to 1.0 based on reasoning quality",
+                },
+                "reasoning": {
+                    "type": "string",
+                    "description": "Brief note on what the score reflects about the student's thinking",
+                },
+            },
+            "required": ["domain", "concept", "probe_type", "score"],
+        },
+    },
 ]
